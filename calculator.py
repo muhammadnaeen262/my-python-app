@@ -1,11 +1,12 @@
-# calculator.py
-def add(a, b):
-    return a + b
+from flask import Flask, request, jsonify
 
-def subtract(a, b):
-    return a - b
+app = Flask(__name__)
 
-def divide(a, b):
-    if b == 0:
-        raise ValueError("Cannot divide by zero")
-    return a / b
+@app.route("/add")
+def add():
+    a = int(request.args.get("a", 0))
+    b = int(request.args.get("b", 0))
+    return jsonify(result=a + b)
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000)
