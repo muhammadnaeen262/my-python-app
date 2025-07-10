@@ -1,43 +1,3 @@
-// pipeline {
-//     agent any
-
-//     environment {
-//         VENV_DIR = ".venv"
-//     }
-
-//     stages {
-//         stage('Checkout') {
-//             steps {
-//                 checkout scm
-//             }
-//         }
-
-//         stage('Setup Python') {
-//             steps {
-//                 sh 'python3 -m venv $VENV_DIR'
-//                 sh './$VENV_DIR/bin/pip install -r requirements.txt'
-//             }
-//         }
-
-//         stage('Run Tests') {
-//             steps {
-//                 sh './$VENV_DIR/bin/pytest'
-//             }
-//         }
-//         // stage('new Test') {
-//         //     steps {
-//         //         sh './$VENV_DIR/bin/pytest tests/test_new.py'
-//         //     }
-//         // }
-//     }
-
-//     post {
-//         always {
-//             echo "Pipeline completed."
-//         }
-//     }
-// }
-
 pipeline {
     agent any
 
@@ -67,9 +27,22 @@ pipeline {
         stage('Push to Docker Hub') {
             steps {
                 withCredentials([usernamePassword(credentialsId: "${DOCKER_CREDENTIALS_ID}", usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    sh 'echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin'
+                    sh 'docker push $IMAGE_TAG'
+                    sh 'docker tag $IMAGE_TAG $IMAGE_NAME:latest'
+                    sh 'docker push $IMAGE_NAME:latest'
+                }
+            }
+        }
+
+        stage('Deploy Locally') {
+            steps {
+                script {
                     sh """
-                      echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
-                      docker push $IMAGE_TAG
+                      docker stop my-python-app || true
+                      docker rm my-python-app || true
+                      docker pull $IMAGE_TAG
+                      docker run -d --name my-python-app -p 5000:5000 $IMAGE_TAG
                     """
                 }
             }
@@ -78,7 +51,7 @@ pipeline {
 
     post {
         always {
-            echo "Done: $IMAGE_TAG"
+            echo "Pipeline complete: $IMAGE_TAG deployed."
         }
     }
 }
