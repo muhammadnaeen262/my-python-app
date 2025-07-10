@@ -24,11 +24,11 @@ pipeline {
                 sh './$VENV_DIR/bin/pytest'
             }
         }
-        stage('new Test') {
-            steps {
-                sh './$VENV_DIR/bin/pytest tests/test_new.py'
-            }
-        }
+        // stage('new Test') {
+        //     steps {
+        //         sh './$VENV_DIR/bin/pytest tests/test_new.py'
+        //     }
+        // }
     }
 
     post {
